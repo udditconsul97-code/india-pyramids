@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { cityView, boundsView, applyView, frameOverview, OVERVIEW } from "./cameraMoves";
+import { cityView, cityCloseView, boundsView, applyView, frameOverview, OVERVIEW } from "./cameraMoves";
+
+const dist = (v: { pos: [number, number, number]; target: [number, number, number] }) =>
+  Math.hypot(v.pos[0] - v.target[0], v.pos[1] - v.target[1], v.pos[2] - v.target[2]);
 
 describe("cityView", () => {
   it("targets the city's footprint at mid-height and pulls back by height", () => {
@@ -13,6 +16,10 @@ describe("cityView", () => {
   it("is deterministic", () => {
     const c = { x: 5, z: -5, height: 80 };
     expect(cityView(c)).toEqual(cityView(c));
+  });
+  it("close-up sits nearer the city than the standard city view", () => {
+    const c = { x: 0, z: 0, height: 200 };
+    expect(dist(cityCloseView(c))).toBeLessThan(dist(cityView(c)));
   });
 });
 

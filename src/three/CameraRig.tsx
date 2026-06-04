@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { CameraControls } from "@react-three/drei";
 import { useStore } from "../store";
 import { BY_NAME, filteredBounds } from "./cityLayout";
-import { frameCity, frameBounds, frameOverview } from "./cameraMoves";
+import { frameCity, frameCityClose, frameBounds, frameOverview } from "./cameraMoves";
 import { TOUR } from "./tour";
 import { INITIAL_CITY } from "./deepLink";
 import { prefersReducedMotion } from "../ui/useReducedMotion";
@@ -65,8 +65,12 @@ export default function CameraRig() {
     if (!cc || !didInit.current) return;
 
     if (tour.status === "playing") {
-      const c = BY_NAME.get(TOUR[tour.beat].city);
-      if (c) frameCity(cc, c, true);
+      const beat = TOUR[tour.beat];
+      const c = beat.city ? BY_NAME.get(beat.city) : undefined;
+      if (beat.view === "overview" || !c) frameOverview(cc, true);
+      else if (beat.view === "closeup") frameCityClose(cc, c, true);
+      else frameCity(cc, c, true);
+      useStore.getState().setSpotlight(beat.spotlight && beat.city ? beat.city : null);
       return;
     }
     if (selectedCity && BY_NAME.has(selectedCity)) {

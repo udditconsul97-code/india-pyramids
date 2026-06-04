@@ -21,6 +21,15 @@ export function cityView(c: { x: number; z: number; height: number }): View {
   };
 }
 
+/** Tighter framing for the narrative close-up beats — pushes in toward the apex. */
+export function cityCloseView(c: { x: number; z: number; height: number }): View {
+  const d = c.height * 1.05 + 90;
+  return {
+    pos: [c.x + d * 0.55, c.height * 0.9 + d * 0.5, c.z + d * 0.55],
+    target: [c.x, c.height * 0.6, c.z],
+  };
+}
+
 /** Frame a cluster (filtered set) by its world bounds. */
 export function boundsView(b: { cx: number; cz: number; span: number }): View {
   const d = Math.max(b.span * 0.9, 500) + 350;
@@ -49,6 +58,9 @@ export function applyView(cc: Framer, v: View, transition: boolean): void {
 
 export const frameCity = (cc: Framer, c: { x: number; z: number; height: number }, transition: boolean) =>
   applyView(cc, cityView(c), transition);
+
+export const frameCityClose = (cc: Framer, c: { x: number; z: number; height: number }, transition: boolean) =>
+  applyView(cc, cityCloseView(c), transition);
 
 export const frameBounds = (cc: Framer, b: { cx: number; cz: number; span: number }, transition: boolean) =>
   applyView(cc, boundsView(b), transition);

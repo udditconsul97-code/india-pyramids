@@ -4,18 +4,27 @@
 // unit-testable without the R3F/WebGL wiring.
 import { BY_NAME } from "./cityLayout";
 
+// A beat's view: the whole map, a city framed, or a close-up. spotlight dims every
+// other pyramid (via the existing selection-dim shader) so the focused city — and its
+// glowing gold apex — carries the eye. This is the Approach-C narrative: overview ->
+// the giant -> push into the apex while the rest recedes -> the home town.
+export type BeatView = "overview" | "city" | "closeup";
+
 export interface TourBeat {
-  city: string; // must exist in BY_NAME
+  view: BeatView;
+  city?: string; // required for "city"/"closeup"; must exist in BY_NAME
+  spotlight?: boolean; // dim all other pyramids onto this city
   caption: string; // <= ~80 chars / 2 lines (premise #3: captions carry the meaning)
-  duration: number; // ms to hold this beat before advancing
+  duration: number; // ms to hold before advancing
 }
 
 export const TOUR: TourBeat[] = [
-  { city: "Mumbai", caption: "Every Indian city, as a pyramid. Taller means a bigger city.", duration: 4000 },
-  { city: "Delhi", caption: "That wide grey base? Most people — below the middle class.", duration: 4000 },
-  { city: "Bengaluru", caption: "The green and amber bands are the middle and affluent classes.", duration: 4000 },
-  { city: "Hyderabad", caption: "And the tiny gold tip is the ultra-rich — a sliver, in every city.", duration: 4200 },
-  { city: "Khurja", caption: "Even in small towns like Khurja, the shape holds.", duration: 4200 },
+  { view: "overview", caption: "India's 305 biggest cities — each one a pyramid.", duration: 3800 },
+  { view: "city", city: "Mumbai", caption: "Taller means bigger. Mumbai is the giant.", duration: 3800 },
+  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The wide grey base is most people — below the middle class.", duration: 4200 },
+  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The green and amber bands are the middle and affluent.", duration: 4000 },
+  { view: "closeup", city: "Mumbai", spotlight: true, caption: "And the gold tip? The ultra-rich — a sliver, in every city.", duration: 4400 },
+  { view: "closeup", city: "Khurja", spotlight: true, caption: "Even in a small town like Khurja, the shape holds.", duration: 4400 },
 ];
 
 export type TourStatus = "idle" | "playing" | "done";
@@ -42,5 +51,5 @@ export function endTour(s: TourState): TourState {
   return { status: "done", beat: s.beat };
 }
 
-// Dev-time guard: every beat must reference a real city (validated in unit tests).
-export const tourCitiesResolve = () => TOUR.every((b) => BY_NAME.has(b.city));
+// Dev-time guard: every beat that names a city must reference a real one.
+export const tourCitiesResolve = () => TOUR.every((b) => !b.city || BY_NAME.has(b.city));

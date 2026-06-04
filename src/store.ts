@@ -22,6 +22,7 @@ interface AppState {
   qualityTier: QualityTier; // adaptive render quality (bloom/shadows/dpr)
   tour: TourState; // cinematic auto-tour state machine
   tourEverPlayed: boolean; // false until the tour has run once (Play vs Replay label)
+  spotlightCity: string | null; // tour-driven focus: dims others without opening the panel
 
   select: (name: string | null) => void;
   hover: (name: string | null) => void;
@@ -32,6 +33,7 @@ interface AppState {
   goToKhurja: () => void;
   setIntroDone: (v: boolean) => void;
   setQualityTier: (t: QualityTier) => void;
+  setSpotlight: (name: string | null) => void;
   startTour: () => void;
   advanceTour: () => void;
   endTour: () => void;
@@ -48,6 +50,7 @@ export const useStore = create<AppState>((set) => ({
   qualityTier: guessInitialTier(),
   tour: TOUR_IDLE,
   tourEverPlayed: false,
+  spotlightCity: null,
 
   // Selecting any city is a user action -> it also cancels the auto-tour.
   select: (name) => set((s) => ({ selectedCity: name, tour: name ? endTour(s.tour) : s.tour })),
@@ -59,7 +62,9 @@ export const useStore = create<AppState>((set) => ({
   goToKhurja: () => set((s) => ({ selectedCity: "Khurja", tour: endTour(s.tour) })),
   setIntroDone: (v) => set({ introDone: v }),
   setQualityTier: (t) => set({ qualityTier: t }),
+  setSpotlight: (name) => set({ spotlightCity: name }),
   startTour: () => set({ tour: startTour(), tourEverPlayed: true }),
   advanceTour: () => set((s) => ({ tour: advanceTour(s.tour) })),
-  endTour: () => set((s) => ({ tour: endTour(s.tour) })),
+  // Ending the tour always clears any spotlight so dimming doesn't stick.
+  endTour: () => set((s) => ({ tour: endTour(s.tour), spotlightCity: null })),
 }));

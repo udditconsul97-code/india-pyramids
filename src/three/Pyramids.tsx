@@ -138,6 +138,7 @@ export default function Pyramids() {
   const stateFilter = useStore((s) => s.stateFilter);
   const hoveredCity = useStore((s) => s.hoveredCity);
   const selectedCity = useStore((s) => s.selectedCity);
+  const spotlightCity = useStore((s) => s.spotlightCity);
 
   const visible = (c: Layout) =>
     (tierFilter === 0 || c.tier === tierFilter) && (stateFilter === "ALL" || c.state === stateFilter);
@@ -195,22 +196,24 @@ export default function Pyramids() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiers, tierFilter, stateFilter, writeMatrices]);
 
-  // Per-instance highlight/dim state (recomputed on hover/select/filter).
+  // Per-instance highlight/dim state. A selected city or a tour spotlight both focus
+  // one city and dim the rest (the spotlight is what the narrative tour drives).
   useEffect(() => {
-    const anySelected = !!selectedCity;
+    const focus = selectedCity ?? spotlightCity;
+    const anyFocus = !!focus;
     for (const t of tiers) {
       t.cities.forEach((c, i) => {
         let s = S_NORMAL;
         if (!visible(c)) s = S_NORMAL;
-        else if (c.name === selectedCity) s = S_SELECTED;
-        else if (anySelected) s = S_DIM;
+        else if (c.name === focus) s = S_SELECTED;
+        else if (anyFocus) s = S_DIM;
         else if (c.name === hoveredCity) s = S_HOVER;
         t.stateArr[i] = s;
       });
       t.stateAttr.needsUpdate = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiers, hoveredCity, selectedCity, tierFilter, stateFilter]);
+  }, [tiers, hoveredCity, selectedCity, spotlightCity, tierFilter, stateFilter]);
 
   const onMove = (tier: number) => (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
