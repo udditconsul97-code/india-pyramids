@@ -5,6 +5,8 @@ import { useStore } from "../store";
 import Land, { GroundShadows } from "./Land";
 import Pyramids from "./Pyramids";
 import CameraRig from "./CameraRig";
+import Effects from "./Effects";
+import { QUALITY, QualityMonitor } from "./useQuality";
 
 const BG = {
   dark: "linear-gradient(180deg, #0C0C13 0%, #15151F 55%, #1C1C2A 100%)",
@@ -14,6 +16,8 @@ const FOG = { dark: "#161620", light: "#E9EBF2" };
 
 export default function Scene() {
   const theme = useStore((s) => s.theme);
+  const tier = useStore((s) => s.qualityTier);
+  const q = QUALITY[tier];
 
   return (
     <div style={{ position: "absolute", inset: 0, background: BG[theme] }}>
@@ -23,6 +27,7 @@ export default function Scene() {
         gl={{ alpha: true, antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
         camera={{ position: [180, 2750, 2350], near: 1, far: 20000, fov: 45 }}
       >
+        <QualityMonitor />
         <fog attach="fog" args={[FOG[theme], 2200, 7000]} />
         <ambientLight intensity={theme === "dark" ? 0.45 : 0.7} />
         <hemisphereLight
@@ -30,11 +35,12 @@ export default function Scene() {
           color={theme === "dark" ? "#9aa3c0" : "#ffffff"}
           groundColor={theme === "dark" ? "#0c0c13" : "#cfd2dc"}
         />
+        {/* Shadow casting is gated by the quality tier (low tier = off, the silent phone cost). */}
         <directionalLight
           position={[1400, 2600, 1100]}
           intensity={theme === "dark" ? 1.5 : 2.0}
-          castShadow
-          shadow-mapSize={[2048, 2048]}
+          castShadow={q.shadows === "high"}
+          shadow-mapSize={[q.shadowMapSize, q.shadowMapSize]}
           shadow-bias={-0.0004}
           shadow-camera-near={100}
           shadow-camera-far={7000}
@@ -55,6 +61,7 @@ export default function Scene() {
         <Pyramids />
         <GroundShadows />
         <CameraRig />
+        <Effects />
       </Canvas>
     </div>
   );
