@@ -9,10 +9,12 @@ import { CITIES } from "./data/cities";
 import { TIER_PCT, fmt } from "./data/income";
 import { useStore } from "./store";
 import { palette, FONT } from "./ui/theme";
+import { useIsNarrow } from "./ui/useIsNarrow";
 
 export default function App() {
   const theme = useStore((s) => s.theme);
   const p = palette(theme);
+  const isNarrow = useIsNarrow();
 
   const totals = useMemo(() => {
     let pop = 0;
@@ -34,7 +36,8 @@ export default function App() {
       <DetailPanel />
       <Legend />
 
-      {/* Title + corpus stats */}
+      {/* Title + corpus stats — hidden on mobile, where the legend owns the bottom */}
+      {!isNarrow && (
       <div
         style={{
           position: "absolute",
@@ -57,6 +60,7 @@ export default function App() {
           {totals.cities} cities · {fmt(totals.pop)} MC pop · {fmt(totals.addr)} addressable
         </div>
       </div>
+      )}
     </div>
   );
 }

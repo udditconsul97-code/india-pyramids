@@ -1,23 +1,30 @@
 import { BAND_COLORS } from "../data/income";
 import { useStore } from "../store";
 import { palette, FONT } from "./theme";
+import { useIsNarrow } from "./useIsNarrow";
 
 export default function Legend() {
   const theme = useStore((s) => s.theme);
   const p = palette(theme);
   const grey = theme === "dark" ? "#3A3A4A" : "#C9C9D2";
+  const isNarrow = useIsNarrow();
+  const selectedCity = useStore((s) => s.selectedCity);
+
+  // On mobile the detail bottom-sheet owns the bottom; don't stack the legend under it.
+  if (isNarrow && selectedCity) return null;
 
   return (
     <div
       style={{
         position: "absolute",
         bottom: 14,
-        left: "50%",
-        transform: "translateX(-50%)",
+        left: isNarrow ? 8 : "50%",
+        right: isNarrow ? 8 : undefined,
+        transform: isNarrow ? undefined : "translateX(-50%)",
         zIndex: 10,
         fontFamily: FONT,
-        maxWidth: "94vw",
-        padding: "10px 16px",
+        maxWidth: isNarrow ? undefined : "94vw",
+        padding: isNarrow ? "8px 12px" : "10px 16px",
         borderRadius: 12,
         background: p.panelBg,
         border: `1px solid ${p.panelBorder}`,
@@ -26,18 +33,21 @@ export default function Legend() {
         textAlign: "center",
       }}
     >
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 14 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: isNarrow ? "6px 10px" : 14 }}>
         {/* Bottom -> top of the pyramid: grey mass to ultra-rich apex */}
         <Item color={grey} label="Below middle class" sub="the base mass" p={p} />
         {[...BAND_COLORS].reverse().map((b) => (
           <Item key={b.key} color={b.color} label={b.label} sub={b.sub} p={p} />
         ))}
       </div>
-      <div style={{ fontSize: 10, color: p.textDim, marginTop: 7, lineHeight: 1.5 }}>
-        Height = city tier · band heights = real population share, so the wide grey base tapering to a tiny ultra-rich apex
-        <strong> is the income disparity, made physical</strong>. Income class % adjusted by tier (national avg 2/4/12/20%);
-        the income model is illustrative. MC pop per 2011 Census.
-      </div>
+      {/* The long disclaimer is desktop-only; on mobile it would dominate the screen. */}
+      {!isNarrow && (
+        <div style={{ fontSize: 10, color: p.textDim, marginTop: 7, lineHeight: 1.5 }}>
+          Height = city tier · band heights = real population share, so the wide grey base tapering to a tiny ultra-rich apex
+          <strong> is the income disparity, made physical</strong>. Income class % adjusted by tier (national avg 2/4/12/20%);
+          the income model is illustrative. MC pop per 2011 Census.
+        </div>
+      )}
     </div>
   );
 }

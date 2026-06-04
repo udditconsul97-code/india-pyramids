@@ -3,6 +3,7 @@ import { CITIES } from "../data/cities";
 import { STATES, TIER_COLORS } from "../data/income";
 import { useStore } from "../store";
 import { palette, FONT } from "./theme";
+import { useIsNarrow } from "./useIsNarrow";
 
 export default function Filters() {
   const theme = useStore((s) => s.theme);
@@ -11,6 +12,7 @@ export default function Filters() {
   const stateFilter = useStore((s) => s.stateFilter);
   const setTierFilter = useStore((s) => s.setTierFilter);
   const setStateFilter = useStore((s) => s.setStateFilter);
+  const isNarrow = useIsNarrow();
 
   const stateList = useMemo(() => [...new Set(CITIES.map((c) => c.state))].sort(), []);
 
@@ -18,8 +20,10 @@ export default function Filters() {
     <div
       style={{
         position: "absolute",
-        top: 16,
-        left: 16,
+        // On mobile the search bar owns the top; filters sit just below it, full width.
+        top: isNarrow ? 96 : 16,
+        left: isNarrow ? 8 : 16,
+        right: isNarrow ? 8 : undefined,
         zIndex: 10,
         display: "flex",
         flexWrap: "wrap",
@@ -32,7 +36,7 @@ export default function Filters() {
         border: `1px solid ${p.panelBorder}`,
         backdropFilter: "blur(10px)",
         boxShadow: p.shadow,
-        maxWidth: "42vw",
+        maxWidth: isNarrow ? undefined : "42vw",
       }}
     >
       {[0, 1, 2, 3, 4].map((t) => {

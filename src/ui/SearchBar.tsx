@@ -3,6 +3,7 @@ import { CITIES } from "../data/cities";
 import { STATES, TIER_COLORS, fmt } from "../data/income";
 import { useStore } from "../store";
 import { palette, FONT } from "./theme";
+import { useIsNarrow } from "./useIsNarrow";
 
 // Lightweight fuzzy score: prefix > word-start > substring > subsequence.
 function score(name: string, q: string): number {
@@ -29,6 +30,7 @@ export default function SearchBar() {
   const resetView = useStore((s) => s.resetView);
   const goToKhurja = useStore((s) => s.goToKhurja);
   const selectedCity = useStore((s) => s.selectedCity);
+  const isNarrow = useIsNarrow();
 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -63,18 +65,29 @@ export default function SearchBar() {
   return (
     <div
       ref={boxRef}
-      style={{
-        position: "absolute",
-        top: 16,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 10,
-        fontFamily: FONT,
-        width: "min(440px, 90vw)",
-      }}
+      style={
+        isNarrow
+          ? {
+              position: "absolute",
+              top: 8,
+              left: 8,
+              right: 52, // leave room for the theme toggle
+              zIndex: 11,
+              fontFamily: FONT,
+            }
+          : {
+              position: "absolute",
+              top: 16,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 10,
+              fontFamily: FONT,
+              width: "min(440px, 90vw)",
+            }
+      }
     >
-      <div style={{ display: "flex", gap: 8 }}>
-        <div style={{ position: "relative", flex: 1 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: isNarrow ? "wrap" : "nowrap" }}>
+        <div style={{ position: "relative", flex: 1, flexBasis: isNarrow ? "100%" : "auto" }}>
           <input
             value={q}
             placeholder="Search a city…"

@@ -1,10 +1,12 @@
 import { useStore } from "../store";
 import { palette, FONT } from "./theme";
+import { useIsNarrow } from "./useIsNarrow";
 
 export default function ThemeToggle() {
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
   const p = palette(theme);
+  const isNarrow = useIsNarrow();
 
   return (
     <button
@@ -12,11 +14,11 @@ export default function ThemeToggle() {
       title="Toggle dark / light"
       style={{
         position: "absolute",
-        top: 16,
-        right: 16,
-        zIndex: 10,
-        width: 40,
-        height: 40,
+        top: isNarrow ? 8 : 16,
+        right: isNarrow ? 8 : 16,
+        zIndex: 12,
+        width: isNarrow ? 36 : 40,
+        height: isNarrow ? 36 : 40,
         borderRadius: 10,
         border: `1px solid ${p.inputBorder}`,
         background: p.panelBg,

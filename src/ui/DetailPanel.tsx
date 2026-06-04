@@ -3,12 +3,14 @@ import { BAND_COLORS, TIER_PCT, TIER_COLORS, STATES, fmt } from "../data/income"
 import { isApproxCoord } from "../data/coords";
 import { useStore } from "../store";
 import { palette, FONT } from "./theme";
+import { useIsNarrow } from "./useIsNarrow";
 
 export default function DetailPanel() {
   const theme = useStore((s) => s.theme);
   const p = palette(theme);
   const selectedCity = useStore((s) => s.selectedCity);
   const resetView = useStore((s) => s.resetView);
+  const isNarrow = useIsNarrow();
 
   if (!selectedCity) return null;
   const city = CITIES.find((c) => c.name === selectedCity);
@@ -25,11 +27,11 @@ export default function DetailPanel() {
     <div
       style={{
         position: "absolute",
-        top: 78,
-        right: 16,
-        zIndex: 10,
-        width: 300,
-        maxHeight: "calc(100vh - 200px)",
+        // Mobile: bottom sheet, full width. Desktop: right-side panel.
+        ...(isNarrow
+          ? { left: 8, right: 8, bottom: 8, maxHeight: "55vh" }
+          : { top: 78, right: 16, width: 300, maxHeight: "calc(100vh - 200px)" }),
+        zIndex: 12,
         overflowY: "auto",
         fontFamily: FONT,
         padding: 18,
