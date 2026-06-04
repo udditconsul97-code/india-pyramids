@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { CameraControls } from "@react-three/drei";
 import { useStore } from "../store";
-import { BY_NAME } from "./cityLayout";
+import { BY_NAME, filteredBounds } from "./cityLayout";
 
 // High-angle isometric overview framing all of India.
 const OVERVIEW = { pos: [180, 2750, 2350] as const, target: [0, 90, 0] as const };
@@ -13,6 +13,8 @@ export default function CameraRig() {
   const didIntro = useRef(false);
   const selectedCity = useStore((s) => s.selectedCity);
   const overviewNonce = useStore((s) => s.overviewNonce);
+  const tierFilter = useStore((s) => s.tierFilter);
+  const stateFilter = useStore((s) => s.stateFilter);
 
   useEffect(() => {
     const cc = controls.current;
@@ -27,22 +29,25 @@ export default function CameraRig() {
       return () => clearTimeout(id);
     }
 
+    // A selected city wins; then a state filter reframes to its cities; else overview.
     if (selectedCity && BY_NAME.has(selectedCity)) {
       const c = BY_NAME.get(selectedCity)!;
       const d = c.height * 1.9 + 140;
-      cc.setLookAt(
-        c.x + d * 0.7,
-        c.height * 1.05 + d * 0.55,
-        c.z + d * 0.7,
-        c.x,
-        c.height * 0.5,
-        c.z,
-        true
-      );
-    } else {
-      cc.setLookAt(...OVERVIEW.pos, ...OVERVIEW.target, true);
+      cc.setLookAt(c.x + d * 0.7, c.height * 1.05 + d * 0.55, c.z + d * 0.7, c.x, c.height * 0.5, c.z, true);
+      return;
     }
-  }, [selectedCity, overviewNonce]);
+
+    if (stateFilter !== "ALL") {
+      const b = filteredBounds(tierFilter, stateFilter);
+      if (b) {
+        const d = Math.max(b.span * 0.9, 500) + 350;
+        cc.setLookAt(b.cx + d * 0.45, d * 0.95, b.cz + d * 0.7, b.cx, 60, b.cz, true);
+        return;
+      }
+    }
+
+    cc.setLookAt(...OVERVIEW.pos, ...OVERVIEW.target, true);
+  }, [selectedCity, overviewNonce, tierFilter, stateFilter]);
 
   return <CameraControls ref={controls} makeDefault minDistance={60} maxDistance={9000} dollyToCursor />;
 }

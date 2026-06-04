@@ -60,6 +60,29 @@ export const BY_TIER: Record<Tier, Layout[]> = { 1: [], 2: [], 3: [], 4: [] };
 for (const l of LAYOUT) BY_TIER[l.tier].push(l);
 
 /**
+ * World bounds (center + span) of the cities matching the current filters, or null
+ * if none match. Used to reframe the camera when a state filter is applied so the
+ * filtered set fills the view instead of being a speck in the full-India overview.
+ */
+export function filteredBounds(
+  tierFilter: number,
+  stateFilter: string
+): { cx: number; cz: number; span: number } | null {
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, n = 0;
+  for (const l of LAYOUT) {
+    if (tierFilter !== 0 && l.tier !== tierFilter) continue;
+    if (stateFilter !== "ALL" && l.state !== stateFilter) continue;
+    n++;
+    if (l.x < minX) minX = l.x;
+    if (l.x > maxX) maxX = l.x;
+    if (l.z < minZ) minZ = l.z;
+    if (l.z > maxZ) maxZ = l.z;
+  }
+  if (n === 0) return null;
+  return { cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2, span: Math.max(maxX - minX, maxZ - minZ) };
+}
+
+/**
  * Cumulative vertical fractions (0..1) of band boundaries for a tier, bottom -> top:
  * [below-middle, lower-middle, upper-middle, affluent, ultra-rich]. The slab heights
  * equal real population shares — the income disparity made physical.
