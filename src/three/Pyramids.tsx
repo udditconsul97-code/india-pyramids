@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Billboard, Text, Html } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import type { ThreeEvent } from "@react-three/fiber";
+import { prefersReducedMotion } from "../ui/useReducedMotion";
+
+const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3);
 import { useStore } from "../store";
 import { TIER_PCT, TIER_COLORS, fmt, type Tier } from "../data/income";
 import {
@@ -138,28 +142,58 @@ export default function Pyramids() {
   const visible = (c: Layout) =>
     (tierFilter === 0 || c.tier === tierFilter) && (stateFilter === "ALL" || c.state === stateFilter);
 
-  // Position/scale matrices (recomputed on filter change). Filtered-out -> scale 0.
-  useEffect(() => {
-    const dummy = new THREE.Object3D();
-    for (const t of tiers) {
-      t.cities.forEach((c, i) => {
-        const k = visible(c) ? c.k : 0;
-        dummy.position.set(c.x, 0, c.z);
-        dummy.scale.set(k, k, k);
-        dummy.rotation.set(0, 0, 0);
-        dummy.updateMatrix();
-        for (let b = 0; b < 5; b++) visualRefs.current[`${t.tier}-${b}`]?.setMatrixAt(i, dummy.matrix);
-        hitRefs.current[t.tier]?.setMatrixAt(i, dummy.matrix);
-      });
-      for (let b = 0; b < 5; b++) {
-        const m = visualRefs.current[`${t.tier}-${b}`];
-        if (m) m.instanceMatrix.needsUpdate = true;
+  // Write all instance matrices, scaling each city by scaleOf(city). Filtered-out -> 0.
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const writeMatrices = useCallback(
+    (scaleOf: (c: Layout) => number) => {
+      for (const t of tiers) {
+        t.cities.forEach((c, i) => {
+          const k = scaleOf(c);
+          dummy.position.set(c.x, 0, c.z);
+          dummy.scale.set(k, k, k);
+          dummy.rotation.set(0, 0, 0);
+          dummy.updateMatrix();
+          for (let b = 0; b < 5; b++) visualRefs.current[`${t.tier}-${b}`]?.setMatrixAt(i, dummy.matrix);
+          hitRefs.current[t.tier]?.setMatrixAt(i, dummy.matrix);
+        });
+        for (let b = 0; b < 5; b++) {
+          const m = visualRefs.current[`${t.tier}-${b}`];
+          if (m) m.instanceMatrix.needsUpdate = true;
+        }
+        const h = hitRefs.current[t.tier];
+        if (h) h.instanceMatrix.needsUpdate = true;
       }
-      const h = hitRefs.current[t.tier];
-      if (h) h.instanceMatrix.needsUpdate = true;
+    },
+    [tiers, dummy]
+  );
+
+  // Ground-rise reveal: scale 0 -> k, swept west->east, easing out. Owns the matrices
+  // until it finishes; reduced-motion skips it (revealDone starts true).
+  const revealDone = useRef(prefersReducedMotion());
+  const revealStart = useRef<number | null>(null);
+  const REVEAL_RISE = 0.9, REVEAL_STAGGER = 0.7;
+  useFrame((state) => {
+    if (revealDone.current) return;
+    if (revealStart.current === null) revealStart.current = state.clock.elapsedTime;
+    const t = state.clock.elapsedTime - revealStart.current;
+    writeMatrices((c) => {
+      if (!visible(c)) return 0;
+      const delay = ((c.x + 1500) / 3000) * REVEAL_STAGGER;
+      const p = Math.min(Math.max((t - delay) / REVEAL_RISE, 0), 1);
+      return c.k * easeOutCubic(p);
+    });
+    if (t >= REVEAL_RISE + REVEAL_STAGGER) {
+      revealDone.current = true;
+      writeMatrices((c) => (visible(c) ? c.k : 0)); // settle to exact final scale
     }
+  });
+
+  // Filter changes after the reveal re-apply full matrices (reveal owns them before that).
+  useEffect(() => {
+    if (!revealDone.current) return;
+    writeMatrices((c) => (visible(c) ? c.k : 0));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiers, tierFilter, stateFilter]);
+  }, [tiers, tierFilter, stateFilter, writeMatrices]);
 
   // Per-instance highlight/dim state (recomputed on hover/select/filter).
   useEffect(() => {

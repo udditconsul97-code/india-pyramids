@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { TOUR_IDLE, startTour, advanceTour, endTour, type TourState } from "./three/tour";
 
 export type Theme = "dark" | "light";
 export type QualityTier = "low" | "high";
@@ -19,6 +20,8 @@ interface AppState {
   overviewNonce: number; // bumped to re-trigger an overview camera move
   introDone: boolean;
   qualityTier: QualityTier; // adaptive render quality (bloom/shadows/dpr)
+  tour: TourState; // cinematic auto-tour state machine
+  tourEverPlayed: boolean; // false until the tour has run once (Play vs Replay label)
 
   select: (name: string | null) => void;
   hover: (name: string | null) => void;
@@ -29,6 +32,9 @@ interface AppState {
   goToKhurja: () => void;
   setIntroDone: (v: boolean) => void;
   setQualityTier: (t: QualityTier) => void;
+  startTour: () => void;
+  advanceTour: () => void;
+  endTour: () => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -40,14 +46,20 @@ export const useStore = create<AppState>((set) => ({
   overviewNonce: 0,
   introDone: false,
   qualityTier: guessInitialTier(),
+  tour: TOUR_IDLE,
+  tourEverPlayed: false,
 
-  select: (name) => set({ selectedCity: name }),
+  // Selecting any city is a user action -> it also cancels the auto-tour.
+  select: (name) => set((s) => ({ selectedCity: name, tour: name ? endTour(s.tour) : s.tour })),
   hover: (name) => set({ hoveredCity: name }),
   setTierFilter: (t) => set({ tierFilter: t }),
   setStateFilter: (s) => set({ stateFilter: s }),
   toggleTheme: () => set((s) => ({ theme: s.theme === "dark" ? "light" : "dark" })),
   resetView: () => set((s) => ({ selectedCity: null, overviewNonce: s.overviewNonce + 1 })),
-  goToKhurja: () => set({ selectedCity: "Khurja" }),
+  goToKhurja: () => set((s) => ({ selectedCity: "Khurja", tour: endTour(s.tour) })),
   setIntroDone: (v) => set({ introDone: v }),
   setQualityTier: (t) => set({ qualityTier: t }),
+  startTour: () => set({ tour: startTour(), tourEverPlayed: true }),
+  advanceTour: () => set((s) => ({ tour: advanceTour(s.tour) })),
+  endTour: () => set((s) => ({ tour: endTour(s.tour) })),
 }));

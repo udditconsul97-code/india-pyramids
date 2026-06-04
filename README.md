@@ -50,3 +50,22 @@ Vite + React + TypeScript · `three` / `@react-three/fiber` / `@react-three/drei
 - **Click** a pyramid to select; **hover** for a tooltip. Selecting dims the rest.
 - **Filters** (top left) — tier toggles + state dropdown.
 - **★ Khurja** — jump to the home marker. **Theme toggle** (top right) — dark / light.
+
+## The cinematic experience
+
+- **Auto-tour on load** — the pyramids rise out of the map, then the camera glides through a
+  few hero cities while captions teach the metaphor (no legend reading required). Any drag,
+  tap, or **Skip tour** hands control over; **Replay tour** brings it back.
+- **Cinematic render (high tier)** — golden-apex bloom via `@react-three/postprocessing`. An
+  adaptive quality tier (`useQuality`) drops bloom + shadows and caps DPR on weak devices, and
+  a live FPS monitor downgrades if frames dip — so it stays smooth on phones.
+- **Deep-link** — `/?city=Mumbai` opens framed on that city (case-insensitive; an unknown name
+  falls through to the tour). The URL updates as you explore, so any view is shareable.
+- **Accessibility** — honors `prefers-reduced-motion` (no auto-motion; a "Play tour" button
+  instead), and shows a static hero fallback if WebGL is unavailable.
+
+## Deploy
+
+Static build (`npm run build` → `dist/`), no backend. Host on any static host — Vercel
+(zero-config for Vite) or GitHub Pages. For GitHub Pages project sites, set Vite's `base` to
+`/india-pyramids/`. Pick a host and wire it up; the app is a plain SPA with a `?city` query param.

@@ -2,52 +2,93 @@ import { useEffect, useRef } from "react";
 import { CameraControls } from "@react-three/drei";
 import { useStore } from "../store";
 import { BY_NAME, filteredBounds } from "./cityLayout";
+import { frameCity, frameBounds, frameOverview } from "./cameraMoves";
+import { TOUR } from "./tour";
+import { INITIAL_CITY } from "./deepLink";
+import { prefersReducedMotion } from "../ui/useReducedMotion";
 
-// High-angle isometric overview framing all of India.
-const OVERVIEW = { pos: [180, 2750, 2350] as const, target: [0, 90, 0] as const };
-// Far/high start for the intro reveal.
-const INTRO_START = { pos: [1100, 4600, 3900] as const, target: [0, 120, 0] as const };
-
+/*
+ * Camera control flow (single resolver, no competing effects):
+ *
+ *   mount ── reduced-motion? ─yes→ endTour ─┐
+ *         ── ?city valid?    ─yes→ select  ─┤
+ *         └─ else            ──────startTour┘
+ *                                           │
+ *   resolver(state) ───────────────────────▼
+ *     tour playing → frame current beat city
+ *     else selected city → frame it
+ *     else state filter → frame filtered bounds
+ *     else → overview
+ *
+ *   ticker: while playing, advance beat every beat.duration ms
+ *   cancel: CameraControls 'control' event (user drag/zoom) → endTour
+ *           selecting any city (store.select) → endTour
+ */
 export default function CameraRig() {
   const controls = useRef<React.ComponentRef<typeof CameraControls>>(null);
-  const didIntro = useRef(false);
+  const didInit = useRef(false);
+
+  const tour = useStore((s) => s.tour);
   const selectedCity = useStore((s) => s.selectedCity);
   const overviewNonce = useStore((s) => s.overviewNonce);
   const tierFilter = useStore((s) => s.tierFilter);
   const stateFilter = useStore((s) => s.stateFilter);
 
+  // Mount precedence: decide tour vs deep-link vs reduced-motion (once).
   useEffect(() => {
     const cc = controls.current;
-    if (!cc) return;
+    if (!cc || didInit.current) return;
+    didInit.current = true;
     cc.smoothTime = 0.7;
 
-    if (!didIntro.current) {
-      didIntro.current = true;
-      cc.setLookAt(...INTRO_START.pos, ...INTRO_START.target, false);
-      cc.setLookAt(...OVERVIEW.pos, ...OVERVIEW.target, true);
-      const id = setTimeout(() => useStore.getState().setIntroDone(true), 2600);
-      return () => clearTimeout(id);
+    const deepCity = INITIAL_CITY;
+    if (deepCity) {
+      useStore.getState().select(deepCity); // also ends the tour; resolver frames it
+    } else if (prefersReducedMotion()) {
+      useStore.getState().endTour(); // resolver settles to overview; captions show "Play tour"
+    } else {
+      useStore.getState().startTour();
     }
+    useStore.getState().setIntroDone(true);
 
-    // A selected city wins; then a state filter reframes to its cities; else overview.
-    if (selectedCity && BY_NAME.has(selectedCity)) {
-      const c = BY_NAME.get(selectedCity)!;
-      const d = c.height * 1.9 + 140;
-      cc.setLookAt(c.x + d * 0.7, c.height * 1.05 + d * 0.55, c.z + d * 0.7, c.x, c.height * 0.5, c.z, true);
+    // Cancel the tour the moment the user grabs the camera.
+    const onControl = () => {
+      if (useStore.getState().tour.status === "playing") useStore.getState().endTour();
+    };
+    cc.addEventListener("control", onControl);
+    return () => cc.removeEventListener("control", onControl);
+  }, []);
+
+  // Resolver: derive the desired view from all state.
+  useEffect(() => {
+    const cc = controls.current;
+    if (!cc || !didInit.current) return;
+
+    if (tour.status === "playing") {
+      const c = BY_NAME.get(TOUR[tour.beat].city);
+      if (c) frameCity(cc, c, true);
       return;
     }
-
+    if (selectedCity && BY_NAME.has(selectedCity)) {
+      frameCity(cc, BY_NAME.get(selectedCity)!, true);
+      return;
+    }
     if (stateFilter !== "ALL") {
       const b = filteredBounds(tierFilter, stateFilter);
       if (b) {
-        const d = Math.max(b.span * 0.9, 500) + 350;
-        cc.setLookAt(b.cx + d * 0.45, d * 0.95, b.cz + d * 0.7, b.cx, 60, b.cz, true);
+        frameBounds(cc, b, true);
         return;
       }
     }
+    frameOverview(cc, true);
+  }, [tour, selectedCity, overviewNonce, tierFilter, stateFilter]);
 
-    cc.setLookAt(...OVERVIEW.pos, ...OVERVIEW.target, true);
-  }, [selectedCity, overviewNonce, tierFilter, stateFilter]);
+  // Ticker: advance tour beats on their timers.
+  useEffect(() => {
+    if (tour.status !== "playing") return;
+    const id = setTimeout(() => useStore.getState().advanceTour(), TOUR[tour.beat].duration);
+    return () => clearTimeout(id);
+  }, [tour]);
 
   return <CameraControls ref={controls} makeDefault minDistance={60} maxDistance={9000} dollyToCursor />;
 }
