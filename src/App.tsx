@@ -6,6 +6,7 @@ import DetailPanel from "./ui/DetailPanel";
 import Legend from "./ui/Legend";
 import ThemeToggle from "./ui/ThemeToggle";
 import Captions from "./ui/Captions";
+import TourPointers from "./ui/TourPointers";
 import { CITIES } from "./data/cities";
 import { TIER_PCT, fmt } from "./data/income";
 import { useStore } from "./store";
@@ -82,6 +83,7 @@ export default function App() {
     <div style={{ position: "fixed", inset: 0, overflow: "hidden", fontFamily: FONT }}>
       <Scene />
       <Captions />
+      <TourPointers />
 
       <SearchBar />
       <Filters />
