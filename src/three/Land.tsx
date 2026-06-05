@@ -4,8 +4,11 @@ import { ContactShadows } from "@react-three/drei";
 import { INDIA, shapePoint } from "./useProjection";
 import { useStore } from "../store";
 
-const LAND = { dark: "#24242F", light: "#E7E7EE" };
-const BORDER = { dark: "#3E3E54", light: "#BFBFCC" };
+// Colored landmass so India reads as a distinct map under the (green/amber/red)
+// pyramids, on both dark and light backgrounds. Cool blue contrasts the warm pyramids;
+// bright state borders make the outline easy to see.
+const LAND = { dark: "#2B486E", light: "#BFD4EF" };
+const BORDER = { dark: "#82B1E6", light: "#4D79B0" };
 
 export default function Land() {
   const theme = useStore((s) => s.theme);

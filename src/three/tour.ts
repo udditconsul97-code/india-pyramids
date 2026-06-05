@@ -20,11 +20,14 @@ export interface TourBeat {
 
 export const TOUR: TourBeat[] = [
   { view: "overview", caption: "India's 305 biggest cities — each one a pyramid.", duration: 3800 },
-  { view: "city", city: "Mumbai", caption: "Taller means bigger. Mumbai is the giant.", duration: 3800 },
-  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The wide grey base is most people — below the middle class.", duration: 4200 },
-  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The green and amber bands are the middle and affluent.", duration: 4000 },
-  { view: "closeup", city: "Mumbai", spotlight: true, caption: "And the gold tip? The ultra-rich — a sliver, in every city.", duration: 4400 },
-  { view: "closeup", city: "Khurja", spotlight: true, caption: "Even in a small town like Khurja, the shape holds.", duration: 4400 },
+  { view: "city", city: "Mumbai", caption: "Taller means bigger. Mumbai is the giant.", duration: 3500 },
+  // Walk the bands bottom -> top while holding the close-up, so each caption names
+  // exactly the band that's lit.
+  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The wide grey base is most people — below the middle class.", duration: 4000 },
+  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The two green bands are the lower-middle and middle classes.", duration: 4000 },
+  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The amber band above them is the affluent.", duration: 3600 },
+  { view: "closeup", city: "Mumbai", spotlight: true, caption: "And the red tip is the elite — the ultra-rich few.", duration: 4200 },
+  { view: "closeup", city: "Khurja", spotlight: true, caption: "Even in a small town like Khurja, the shape holds.", duration: 4200 },
 ];
 
 export type TourStatus = "idle" | "playing" | "done";
