@@ -32,10 +32,15 @@ export const TOUR: TourBeat[] = [
   { view: "closeup", city: "Mumbai", tier: 0, spotlight: true, caption: "The two green bands are the lower-middle and middle classes.", duration: 3800 },
   { view: "closeup", city: "Mumbai", tier: 0, spotlight: true, caption: "The amber band above them is the affluent.", duration: 3400 },
   { view: "closeup", city: "Mumbai", tier: 0, spotlight: true, caption: "And the red tip is the elite — the ultra-rich few.", duration: 3800 },
-  { view: "tier", tier: 1, orbit: true, caption: "Tier 1 — the 14 megacities. Towering giants.", duration: 7500 },
-  { view: "tier", tier: 2, orbit: true, caption: "Tier 2 — 48 large cities, still tall.", duration: 7500 },
-  { view: "tier", tier: 3, orbit: true, caption: "Tier 3 — 87 mid-size cities, shorter.", duration: 7500 },
-  { view: "tier", tier: 4, orbit: true, caption: "Tier 4 — 156 towns, the smallest and most numerous.", duration: 7500 },
+  // Each tier: a wide, rotating, labelled shot of the whole tier, then (T2-T4) a zoom-in
+  // to one representative city's stack, then zoom back out into the next tier.
+  { view: "tier", tier: 1, orbit: true, caption: "Tier 1 — the 14 megacities. Towering giants.", duration: 6000 },
+  { view: "tier", tier: 2, orbit: true, caption: "Tier 2 — 48 large cities, still tall.", duration: 5000 },
+  { view: "closeup", city: "Bhopal", tier: 2, spotlight: true, caption: "Bhopal — a Tier-2 city in Madhya Pradesh.", duration: 4500 },
+  { view: "tier", tier: 3, orbit: true, caption: "Tier 3 — 87 mid-size cities.", duration: 5000 },
+  { view: "closeup", city: "Kochi", tier: 3, spotlight: true, caption: "Kochi — a Tier-3 city in Kerala.", duration: 4500 },
+  { view: "tier", tier: 4, orbit: true, caption: "Tier 4 — 156 towns, the smallest and most numerous.", duration: 5000 },
+  { view: "closeup", city: "Shimla", tier: 4, spotlight: true, caption: "Shimla — a Tier-4 town in Himachal Pradesh.", duration: 4500 },
   { view: "overview", tier: 0, orbit: true, caption: "From megacity to small town, the income shape holds.", duration: 6000 },
 ];
 

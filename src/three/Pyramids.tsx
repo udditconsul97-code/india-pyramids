@@ -4,6 +4,7 @@ import { Billboard, Text, Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import type { ThreeEvent } from "@react-three/fiber";
 import { prefersReducedMotion } from "../ui/useReducedMotion";
+import { TOUR } from "./tour";
 
 const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3);
 import { useStore } from "../store";
@@ -139,6 +140,7 @@ export default function Pyramids() {
   const hoveredCity = useStore((s) => s.hoveredCity);
   const selectedCity = useStore((s) => s.selectedCity);
   const spotlightCity = useStore((s) => s.spotlightCity);
+  const tour = useStore((s) => s.tour);
 
   const visible = (c: Layout) =>
     (tierFilter === 0 || c.tier === tierFilter) && (stateFilter === "ALL" || c.state === stateFilter);
@@ -238,13 +240,21 @@ export default function Pyramids() {
   const labels = useMemo(() => {
     const set = new Map<string, Layout>();
     for (const c of BY_TIER[1]) set.set(c.name, c); // always-on Tier-1
+    // During a tour "tier" beat, label every city of that tier (Tier 1/2/3/4 by name).
+    if (tour.status === "playing") {
+      const beat = TOUR[tour.beat];
+      if (beat?.view === "tier" && tierFilter >= 1 && tierFilter <= 4) {
+        for (const c of BY_TIER[tierFilter as Tier]) set.set(c.name, c);
+      }
+    }
     if (hoveredCity && BY_NAME.has(hoveredCity)) set.set(hoveredCity, BY_NAME.get(hoveredCity)!);
     if (selectedCity && BY_NAME.has(selectedCity)) set.set(selectedCity, BY_NAME.get(selectedCity)!);
+    if (spotlightCity && BY_NAME.has(spotlightCity)) set.set(spotlightCity, BY_NAME.get(spotlightCity)!);
     const khurja = BY_NAME.get("Khurja");
     if (khurja) set.set("Khurja", khurja);
     return [...set.values()].filter(visible);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hoveredCity, selectedCity, tierFilter, stateFilter]);
+  }, [hoveredCity, selectedCity, spotlightCity, tierFilter, stateFilter, tour]);
 
   const labelColor = theme === "dark" ? "#F2F2F7" : "#1A1A22";
   const labelOutline = theme === "dark" ? "#0B0B12" : "#FFFFFF";
