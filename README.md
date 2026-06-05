@@ -27,9 +27,10 @@ Vite + React + TypeScript · `three` / `@react-three/fiber` / `@react-three/drei
   (`STATES`, `TIER_PCT`, `TIER_COLORS`, `BAND_COLORS`, `fmt`) are ported verbatim from the
   original prototype. The income model is illustrative (national avg 2/4/12/20%); the UI
   keeps the disclaimer. MC pop per 2011 Census.
-- **Geocoding** (`src/data/coords.ts`) — Tier-1/2 cities use hardcoded exact coordinates;
-  Tier-3/4 use `stateCentroid + deterministicJitter(name)` clamped to India bounds, so their
-  positions are approximate (state-level). Khurja (UP) is the exact home marker.
+- **Geocoding** (`src/data/cityCoords.ts`) — every city is placed at its real `[lat, lng]`:
+  sourced from a public cities dataset (state-disambiguated), with hand-set values for renamed
+  cities (e.g. Mysore→Mysuru) and urban agglomerations (e.g. Kalyan-Dombivli), and verified
+  exact coords for the Tier-1/2 foreground + Khurja. `coords.ts` clamps to India bounds.
 - **Landmass** (`src/data/india.geojson`) — India states, dissolved from districts and
   simplified with mapshaper, bundled for offline use (~26 KB).
 - **Projection** (`src/three/useProjection.ts`) — one `d3.geoMercator` shared by the land
