@@ -3,12 +3,27 @@ import { CameraControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useStore } from "../store";
 import { BY_NAME, filteredBounds } from "./cityLayout";
-import { frameCity, frameCityClose, frameBounds, frameOverview, frameEye } from "./cameraMoves";
+import { frameCity, frameCityClose, frameBounds, frameOverview, frameEye, frameBirdseye } from "./cameraMoves";
 import { TOUR } from "./tour";
 import { INITIAL_CITY } from "./deepLink";
 import { prefersReducedMotion } from "../ui/useReducedMotion";
 
 const ORBIT_SPEED = 0.12; // rad/s — gentle, immersive rotation during flagged beats
+
+// Bird's-eye zoom-pulse: camera distance over the 10s beat — fast in, fast out, in, out.
+function birdseyeDist(t: number): number {
+  const FAR = 3000,
+    NEAR = 1150;
+  const ss = (u: number) => {
+    u = Math.max(0, Math.min(1, u));
+    return u * u * (3 - 2 * u); // smoothstep
+  };
+  const lerp = (a: number, b: number, u: number) => a + (b - a) * ss(u);
+  if (t < 1.2) return lerp(FAR, NEAR, t / 1.2); // fast in
+  if (t < 2.4) return lerp(NEAR, FAR, (t - 1.2) / 1.2); // fast out
+  if (t < 6.2) return lerp(FAR, NEAR, (t - 2.4) / 3.8); // in
+  return lerp(NEAR, FAR, (t - 6.2) / 3.8); // out
+}
 
 /*
  * Camera control:
@@ -73,6 +88,8 @@ export default function CameraRig() {
       const beat = TOUR[tour.beat];
       if (beat.view === "revolve") {
         frameEye(cc, true);
+      } else if (beat.view === "birdseye") {
+        frameBirdseye(cc, true);
       } else if (beat.view === "tier") {
         const b = filteredBounds(beat.tier ?? 0, "ALL");
         if (b) frameBounds(cc, b, true);
@@ -106,17 +123,30 @@ export default function CameraRig() {
     return () => clearTimeout(id);
   }, [tour]);
 
-  // Orbit: gentle rotation on "orbit" beats; the finale "revolve" beat spins exactly one
-  // full 360° over its duration (speed = 2π / duration).
+  // Per-frame camera animation during the tour: tracks elapsed time within the current
+  // beat, then applies orbit (gentle), revolve (one full 360°), or the bird's-eye zoom-pulse.
+  const beatT = useRef({ i: -1, t: 0 });
   useFrame((_, delta) => {
     const cc = controls.current;
     if (!cc) return;
     const st = useStore.getState();
-    if (st.tour.status !== "playing") return;
-    const beat = TOUR[st.tour.beat];
-    if (!beat?.orbit && !beat?.revolve) return;
-    const speed = beat.revolve ? (2 * Math.PI) / (beat.duration / 1000) : ORBIT_SPEED;
-    cc.rotate(speed * delta, 0, false);
+    if (st.tour.status !== "playing") {
+      beatT.current.i = -1;
+      return;
+    }
+    const i = st.tour.beat;
+    const beat = TOUR[i];
+    if (beatT.current.i !== i) beatT.current = { i, t: 0 };
+    else beatT.current.t += delta;
+    const t = beatT.current.t;
+
+    if (beat?.orbit || beat?.revolve) {
+      const speed = beat.revolve ? (2 * Math.PI) / (beat.duration / 1000) : ORBIT_SPEED;
+      cc.rotate(speed * delta, 0, false);
+    }
+    if (beat?.zoompulse) {
+      cc.dollyTo(birdseyeDist(t), false);
+    }
   });
 
   return <CameraControls ref={controls} makeDefault minDistance={60} maxDistance={9000} dollyToCursor />;

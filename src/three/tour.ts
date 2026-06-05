@@ -10,8 +10,8 @@ import { BY_NAME } from "./cityLayout";
 // the giant -> push into the apex while the rest recedes -> the home town.
 // "tier" frames the cities of beat.tier (a wide, zoomed-out shot). overview/city/closeup
 // are the zoomed-in shots. orbit slowly rotates the camera for an immersive 3D feel.
-// "revolve" is the finale: a low, eye-level framing that spins a full 360° over the beat.
-export type BeatView = "overview" | "city" | "closeup" | "tier" | "revolve";
+// "revolve" = eye-level 360° finale. "birdseye" = top-down view that pulses zoom in/out.
+export type BeatView = "overview" | "city" | "closeup" | "tier" | "revolve" | "birdseye";
 
 export interface TourBeat {
   view: BeatView;
@@ -20,6 +20,7 @@ export interface TourBeat {
   spotlight?: boolean; // dim all other pyramids onto this city (also shows its data panel)
   orbit?: boolean; // slowly rotate the camera during the beat
   revolve?: boolean; // spin exactly one full 360° turn over the beat's duration
+  zoompulse?: boolean; // bird's-eye: pulse the zoom in/out (fast in, fast out, in, out)
   caption: string; // <= ~80 chars / 2 lines (premise #3: captions carry the meaning)
   duration: number; // ms to hold before advancing
 }
@@ -39,14 +40,17 @@ export const TOUR: TourBeat[] = [
   { view: "tier", tier: 1, orbit: true, caption: "Tier 1 — the 14 megacities. Towering giants.", duration: 6000 },
   { view: "tier", tier: 2, orbit: true, caption: "Tier 2 — 48 large cities, still tall.", duration: 5000 },
   { view: "closeup", city: "Bhopal", tier: 2, spotlight: true, caption: "Bhopal — a Tier-2 city in Madhya Pradesh.", duration: 4500 },
-  { view: "tier", tier: 3, orbit: true, caption: "Tier 3 — 87 mid-size cities.", duration: 5000 },
-  { view: "closeup", city: "Saharanpur", tier: 3, spotlight: true, caption: "Saharanpur — a Tier-3 city in Uttar Pradesh.", duration: 4500 },
-  { view: "tier", tier: 4, orbit: true, caption: "Tier 4 — 156 towns, the smallest and most numerous.", duration: 5000 },
-  { view: "closeup", city: "Farrukhabad", tier: 4, spotlight: true, caption: "Farrukhabad — a Tier-4 town in Uttar Pradesh.", duration: 4500 },
+  // Tier 3 & 4 get extra dwell time to showcase the mid-size cities and small towns.
+  { view: "tier", tier: 3, orbit: true, caption: "Tier 3 — 87 mid-size cities.", duration: 7000 },
+  { view: "closeup", city: "Saharanpur", tier: 3, spotlight: true, caption: "Saharanpur — a Tier-3 city in Uttar Pradesh.", duration: 6000 },
+  { view: "tier", tier: 4, orbit: true, caption: "Tier 4 — 156 towns, the smallest and most numerous.", duration: 7000 },
+  { view: "closeup", city: "Farrukhabad", tier: 4, spotlight: true, caption: "Farrukhabad — a Tier-4 town in Uttar Pradesh.", duration: 6000 },
   { view: "overview", tier: 0, orbit: true, caption: "From megacity to small town, the income shape holds.", duration: 6000 },
-  // Finale: drop to eye level and revolve a full 360° around India. Duration is set so
-  // the whole demo lands at ~90s (62.7s through here + 27.3s = 90.0s).
-  { view: "revolve", tier: 0, revolve: true, caption: "A full 360° turn — the income pyramid repeats across India.", duration: 27300 },
+  // Finale part 1: drop to eye level and revolve a full 360° around India.
+  { view: "revolve", tier: 0, revolve: true, caption: "A full 360° turn — the income pyramid repeats across India.", duration: 20300 },
+  // Finale part 2 (last 10s): a bird's-eye view that pulses the zoom — fast in, fast out,
+  // in, out. Total demo lands at exactly 100.0s.
+  { view: "birdseye", tier: 0, zoompulse: true, caption: "A bird's-eye view across all of India.", duration: 10000 },
 ];
 
 export type TourStatus = "idle" | "playing" | "done";

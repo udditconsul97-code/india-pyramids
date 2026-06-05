@@ -16,6 +16,10 @@ export const OVERVIEW: View = { pos: [180, 2750, 2350], target: [0, 90, 0] };
 // height kept low (~14° above horizon) so pyramids read in profile as the camera circles.
 export const EYE_VIEW: View = { pos: [0, 850, 3400], target: [0, 120, 0] };
 
+// Top-down bird's-eye framing (tiny z offset avoids gimbal lock). The zoom-pulse drives
+// the distance/height each frame; this just sets the straight-down orientation.
+export const BIRDSEYE: View = { pos: [0, 3000, 1], target: [0, 0, 0] };
+
 /** Frame a single city at a flattering downward angle, distance scaled to its height. */
 export function cityView(c: { x: number; z: number; height: number }): View {
   const d = c.height * 1.9 + 140;
@@ -87,3 +91,7 @@ export const frameOverview = (cc: Framer, transition: boolean) => applyView(cc, 
 // (a panned, off-center pivot would swing India across the screen as it turns).
 export const frameEye = (cc: Framer, transition: boolean) =>
   cc.setLookAt(EYE_VIEW.pos[0], EYE_VIEW.pos[1], EYE_VIEW.pos[2], EYE_VIEW.target[0], EYE_VIEW.target[1], EYE_VIEW.target[2], transition);
+
+// Top-down bird's-eye — centered (no pan); the zoom-pulse adjusts distance per frame.
+export const frameBirdseye = (cc: Framer, transition: boolean) =>
+  cc.setLookAt(BIRDSEYE.pos[0], BIRDSEYE.pos[1], BIRDSEYE.pos[2], BIRDSEYE.target[0], BIRDSEYE.target[1], BIRDSEYE.target[2], transition);
