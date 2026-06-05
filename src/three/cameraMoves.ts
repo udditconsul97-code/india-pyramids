@@ -52,8 +52,16 @@ export interface Framer {
   ): unknown;
 }
 
+// On wide screens, truck the camera left so India renders ~12% right of center,
+// leaving the left margin clear for the tour captions / filters. 0 on narrow screens.
+function panX(): number {
+  if (typeof window === "undefined" || window.innerWidth < 760) return 0;
+  return -380;
+}
+
 export function applyView(cc: Framer, v: View, transition: boolean): void {
-  cc.setLookAt(v.pos[0], v.pos[1], v.pos[2], v.target[0], v.target[1], v.target[2], transition);
+  const dx = panX();
+  cc.setLookAt(v.pos[0] + dx, v.pos[1], v.pos[2], v.target[0] + dx, v.target[1], v.target[2], transition);
 }
 
 export const frameCity = (cc: Framer, c: { x: number; z: number; height: number }, transition: boolean) =>

@@ -9,11 +9,15 @@ export default function DetailPanel() {
   const theme = useStore((s) => s.theme);
   const p = palette(theme);
   const selectedCity = useStore((s) => s.selectedCity);
+  const spotlightCity = useStore((s) => s.spotlightCity);
   const resetView = useStore((s) => s.resetView);
   const isNarrow = useIsNarrow();
 
-  if (!selectedCity) return null;
-  const city = CITIES.find((c) => c.name === selectedCity);
+  // Show the panel for a user-selected city OR the tour's spotlight city (so the tour
+  // surfaces the focused city's data on the right).
+  const focusCity = selectedCity ?? spotlightCity;
+  if (!focusCity) return null;
+  const city = CITIES.find((c) => c.name === focusCity);
   if (!city) return null;
 
   const pct = TIER_PCT[city.tier];

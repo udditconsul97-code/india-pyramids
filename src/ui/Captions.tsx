@@ -3,9 +3,9 @@ import { TOUR } from "../three/tour";
 import { palette, FONT } from "./theme";
 import { useIsNarrow } from "./useIsNarrow";
 
-// The tour's teaching layer: a big caption card while the camera flies, plus a single
-// control that is "Skip tour" mid-tour and "Play/Replay tour" when idle/done. For
-// reduced-motion users the tour never auto-plays, so the Play button is their way in.
+// Tour teaching layer. On desktop the captions sit on the LEFT, below the filters,
+// clear of the (right-shifted) map. On mobile they're centered. The single control is
+// "Skip tour" mid-tour and "Play/Replay tour" otherwise.
 export default function Captions() {
   const theme = useStore((s) => s.theme);
   const p = palette(theme);
@@ -18,62 +18,82 @@ export default function Captions() {
   const playing = tour.status === "playing";
   const beat = TOUR[tour.beat];
 
-  return (
-    <>
-      {playing && beat && (
-        <div
-          aria-live="polite"
-          style={{
-            position: "absolute",
-            top: isNarrow ? "40%" : "15%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 10,
-            width: "min(560px, 92vw)",
-            textAlign: "center",
-            pointerEvents: "none",
-            fontFamily: FONT,
-            padding: "14px 20px",
-            borderRadius: 14,
-            background: p.panelBg,
-            border: `1px solid ${p.panelBorder}`,
-            backdropFilter: "blur(10px)",
-            boxShadow: p.shadow,
-            color: p.text,
-            fontSize: "clamp(17px, 3.4vw, 28px)",
-            fontWeight: 500,
-            lineHeight: 1.3,
-          }}
-        >
-          {beat.caption}
-        </div>
-      )}
+  const controlBtn = (
+    <button
+      onClick={() => (playing ? end() : start())}
+      aria-label={playing ? "Skip the tour" : everPlayed ? "Replay the tour" : "Play the tour"}
+      style={{
+        padding: "7px 16px",
+        fontSize: 13,
+        fontWeight: 600,
+        fontFamily: FONT,
+        borderRadius: 999,
+        border: `1px solid ${p.inputBorder}`,
+        background: p.panelBg,
+        color: p.text,
+        cursor: "pointer",
+        backdropFilter: "blur(10px)",
+        boxShadow: p.shadow,
+        whiteSpace: "nowrap",
+        alignSelf: "flex-start",
+      }}
+    >
+      {playing ? "Skip tour ✕" : everPlayed ? "▶ Replay tour" : "▶ Play tour"}
+    </button>
+  );
 
-      <button
-        onClick={() => (playing ? end() : start())}
-        aria-label={playing ? "Skip the tour" : everPlayed ? "Replay the tour" : "Play the tour"}
-        style={{
-          position: "absolute",
-          left: "50%",
-          transform: "translateX(-50%)",
-          ...(isNarrow ? { bottom: 72 } : { top: 64 }),
-          zIndex: 11,
-          padding: "7px 16px",
-          fontSize: 13,
-          fontWeight: 600,
-          fontFamily: FONT,
-          borderRadius: 999,
-          border: `1px solid ${p.inputBorder}`,
-          background: p.panelBg,
-          color: p.text,
-          cursor: "pointer",
-          backdropFilter: "blur(10px)",
-          boxShadow: p.shadow,
-          whiteSpace: "nowrap",
-        }}
-      >
-        {playing ? "Skip tour ✕" : everPlayed ? "▶ Replay tour" : "▶ Play tour"}
-      </button>
-    </>
+  const captionCard = playing && beat && (
+    <div
+      aria-live="polite"
+      style={{
+        fontFamily: FONT,
+        padding: "14px 18px",
+        borderRadius: 14,
+        background: p.panelBg,
+        border: `1px solid ${p.panelBorder}`,
+        backdropFilter: "blur(10px)",
+        boxShadow: p.shadow,
+        color: p.text,
+        fontSize: isNarrow ? "clamp(16px, 4vw, 22px)" : 21,
+        fontWeight: 500,
+        lineHeight: 1.35,
+      }}
+    >
+      {beat.caption}
+    </div>
+  );
+
+  // Mobile: caption floats center, control pinned bottom-center (map is full-screen).
+  if (isNarrow) {
+    return (
+      <>
+        {playing && beat && (
+          <div style={{ position: "absolute", top: "40%", left: 8, right: 8, zIndex: 10, textAlign: "center", pointerEvents: "none" }}>
+            {captionCard}
+          </div>
+        )}
+        <div style={{ position: "absolute", bottom: 72, left: "50%", transform: "translateX(-50%)", zIndex: 11 }}>{controlBtn}</div>
+      </>
+    );
+  }
+
+  // Desktop: left column under the filters; the map is shifted right to clear it.
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 86,
+        left: 16,
+        zIndex: 11,
+        width: "min(360px, 32vw)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        alignItems: "flex-start",
+      }}
+    >
+      {captionCard}
+      {controlBtn}
+    </div>
   );
 }
