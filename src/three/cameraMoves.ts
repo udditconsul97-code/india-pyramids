@@ -12,6 +12,10 @@ export interface View {
 // High-angle isometric overview framing all of India.
 export const OVERVIEW: View = { pos: [180, 2750, 2350], target: [0, 90, 0] };
 
+// Low, eye-level framing for the finale 360° revolve — distance fits the whole landmass,
+// height kept low (~14° above horizon) so pyramids read in profile as the camera circles.
+export const EYE_VIEW: View = { pos: [0, 850, 3400], target: [0, 120, 0] };
+
 /** Frame a single city at a flattering downward angle, distance scaled to its height. */
 export function cityView(c: { x: number; z: number; height: number }): View {
   const d = c.height * 1.9 + 140;
@@ -78,3 +82,8 @@ export const frameBounds = (cc: Framer, b: { cx: number; cz: number; span: numbe
   applyView(cc, boundsView(b), transition);
 
 export const frameOverview = (cc: Framer, transition: boolean) => applyView(cc, OVERVIEW, transition);
+
+// Eye-level finale framing — deliberately NOT panned, so the 360° revolve stays centered
+// (a panned, off-center pivot would swing India across the screen as it turns).
+export const frameEye = (cc: Framer, transition: boolean) =>
+  cc.setLookAt(EYE_VIEW.pos[0], EYE_VIEW.pos[1], EYE_VIEW.pos[2], EYE_VIEW.target[0], EYE_VIEW.target[1], EYE_VIEW.target[2], transition);

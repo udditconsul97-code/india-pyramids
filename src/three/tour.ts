@@ -10,7 +10,8 @@ import { BY_NAME } from "./cityLayout";
 // the giant -> push into the apex while the rest recedes -> the home town.
 // "tier" frames the cities of beat.tier (a wide, zoomed-out shot). overview/city/closeup
 // are the zoomed-in shots. orbit slowly rotates the camera for an immersive 3D feel.
-export type BeatView = "overview" | "city" | "closeup" | "tier";
+// "revolve" is the finale: a low, eye-level framing that spins a full 360° over the beat.
+export type BeatView = "overview" | "city" | "closeup" | "tier" | "revolve";
 
 export interface TourBeat {
   view: BeatView;
@@ -18,6 +19,7 @@ export interface TourBeat {
   tier?: number; // 0 = all; 1-4 sets the visible tier for this beat (drives "tier" view)
   spotlight?: boolean; // dim all other pyramids onto this city (also shows its data panel)
   orbit?: boolean; // slowly rotate the camera during the beat
+  revolve?: boolean; // spin exactly one full 360° turn over the beat's duration
   caption: string; // <= ~80 chars / 2 lines (premise #3: captions carry the meaning)
   duration: number; // ms to hold before advancing
 }
@@ -42,6 +44,9 @@ export const TOUR: TourBeat[] = [
   { view: "tier", tier: 4, orbit: true, caption: "Tier 4 — 156 towns, the smallest and most numerous.", duration: 5000 },
   { view: "closeup", city: "Farrukhabad", tier: 4, spotlight: true, caption: "Farrukhabad — a Tier-4 town in Uttar Pradesh.", duration: 4500 },
   { view: "overview", tier: 0, orbit: true, caption: "From megacity to small town, the income shape holds.", duration: 6000 },
+  // Finale: drop to eye level and revolve a full 360° around India. Duration is set so
+  // the whole demo lands at ~90s (62.7s through here + 27.3s = 90.0s).
+  { view: "revolve", tier: 0, revolve: true, caption: "A full 360° turn — the income pyramid repeats across India.", duration: 27300 },
 ];
 
 export type TourStatus = "idle" | "playing" | "done";

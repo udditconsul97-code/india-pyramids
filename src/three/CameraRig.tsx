@@ -3,7 +3,7 @@ import { CameraControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useStore } from "../store";
 import { BY_NAME, filteredBounds } from "./cityLayout";
-import { frameCity, frameCityClose, frameBounds, frameOverview } from "./cameraMoves";
+import { frameCity, frameCityClose, frameBounds, frameOverview, frameEye } from "./cameraMoves";
 import { TOUR } from "./tour";
 import { INITIAL_CITY } from "./deepLink";
 import { prefersReducedMotion } from "../ui/useReducedMotion";
@@ -71,7 +71,9 @@ export default function CameraRig() {
 
     if (tour.status === "playing") {
       const beat = TOUR[tour.beat];
-      if (beat.view === "tier") {
+      if (beat.view === "revolve") {
+        frameEye(cc, true);
+      } else if (beat.view === "tier") {
         const b = filteredBounds(beat.tier ?? 0, "ALL");
         if (b) frameBounds(cc, b, true);
         else frameOverview(cc, true);
@@ -104,14 +106,17 @@ export default function CameraRig() {
     return () => clearTimeout(id);
   }, [tour]);
 
-  // Orbit: gentle continuous rotation during beats flagged orbit.
+  // Orbit: gentle rotation on "orbit" beats; the finale "revolve" beat spins exactly one
+  // full 360° over its duration (speed = 2π / duration).
   useFrame((_, delta) => {
     const cc = controls.current;
     if (!cc) return;
     const st = useStore.getState();
-    if (st.tour.status === "playing" && TOUR[st.tour.beat]?.orbit) {
-      cc.rotate(ORBIT_SPEED * delta, 0, false);
-    }
+    if (st.tour.status !== "playing") return;
+    const beat = TOUR[st.tour.beat];
+    if (!beat?.orbit && !beat?.revolve) return;
+    const speed = beat.revolve ? (2 * Math.PI) / (beat.duration / 1000) : ORBIT_SPEED;
+    cc.rotate(speed * delta, 0, false);
   });
 
   return <CameraControls ref={controls} makeDefault minDistance={60} maxDistance={9000} dollyToCursor />;
