@@ -38,9 +38,9 @@ export const TOUR: TourBeat[] = [
   { view: "tier", tier: 2, orbit: true, caption: "Tier 2 — 48 large cities, still tall.", duration: 5000 },
   { view: "closeup", city: "Bhopal", tier: 2, spotlight: true, caption: "Bhopal — a Tier-2 city in Madhya Pradesh.", duration: 4500 },
   { view: "tier", tier: 3, orbit: true, caption: "Tier 3 — 87 mid-size cities.", duration: 5000 },
-  { view: "closeup", city: "Kochi", tier: 3, spotlight: true, caption: "Kochi — a Tier-3 city in Kerala.", duration: 4500 },
+  { view: "closeup", city: "Saharanpur", tier: 3, spotlight: true, caption: "Saharanpur — a Tier-3 city in Uttar Pradesh.", duration: 4500 },
   { view: "tier", tier: 4, orbit: true, caption: "Tier 4 — 156 towns, the smallest and most numerous.", duration: 5000 },
-  { view: "closeup", city: "Shimla", tier: 4, spotlight: true, caption: "Shimla — a Tier-4 town in Himachal Pradesh.", duration: 4500 },
+  { view: "closeup", city: "Farrukhabad", tier: 4, spotlight: true, caption: "Farrukhabad — a Tier-4 town in Uttar Pradesh.", duration: 4500 },
   { view: "overview", tier: 0, orbit: true, caption: "From megacity to small town, the income shape holds.", duration: 6000 },
 ];
 
