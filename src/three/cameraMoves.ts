@@ -52,15 +52,19 @@ export interface Framer {
   ): unknown;
 }
 
-// On wide screens, truck the camera left so India renders ~12% right of center,
-// leaving the left margin clear for the tour captions / filters. 0 on narrow screens.
-function panX(): number {
+// On wide screens, truck the camera left so the subject renders ~10% right of center,
+// leaving the left margin clear for the tour captions / filters. The shift is a fraction
+// of the camera DISTANCE (not a fixed world amount) so it's a consistent ~10% screen
+// shift at every zoom — full on the wide overview/tier shots, tiny on close-ups (which
+// would otherwise be pushed off-screen and go blank). 0 on narrow screens.
+function panX(v: View): number {
   if (typeof window === "undefined" || window.innerWidth < 760) return 0;
-  return -380;
+  const dist = Math.hypot(v.pos[0] - v.target[0], v.pos[1] - v.target[1], v.pos[2] - v.target[2]);
+  return -0.1 * dist;
 }
 
 export function applyView(cc: Framer, v: View, transition: boolean): void {
-  const dx = panX();
+  const dx = panX(v);
   cc.setLookAt(v.pos[0] + dx, v.pos[1], v.pos[2], v.target[0] + dx, v.target[1], v.target[2], transition);
 }
 
