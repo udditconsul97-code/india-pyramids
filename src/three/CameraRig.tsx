@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { CameraControls } from "@react-three/drei";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useStore } from "../store";
 import { BY_NAME, filteredBounds } from "./cityLayout";
 import { frameCity, frameCityClose, frameBounds, frameOverview } from "./cameraMoves";
@@ -7,26 +8,23 @@ import { TOUR } from "./tour";
 import { INITIAL_CITY } from "./deepLink";
 import { prefersReducedMotion } from "../ui/useReducedMotion";
 
+const ORBIT_SPEED = 0.12; // rad/s — gentle, immersive rotation during flagged beats
+
 /*
- * Camera control flow (single resolver, no competing effects):
- *
- *   mount ── reduced-motion? ─yes→ endTour ─┐
- *         ── ?city valid?    ─yes→ select  ─┤
- *         └─ else            ──────startTour┘
- *                                           │
- *   resolver(state) ───────────────────────▼
- *     tour playing → frame current beat city
- *     else selected city → frame it
- *     else state filter → frame filtered bounds
- *     else → overview
- *
- *   ticker: while playing, advance beat every beat.duration ms
- *   cancel: CameraControls 'control' event (user drag/zoom) → endTour
- *           selecting any city (store.select) → endTour
+ * Camera control:
+ *   mount: reduced-motion / ?city -> no tour; else start tour. didInit guards it.
+ *   beat-effects (per beat): apply the beat's tier filter (raw, no tour-cancel) + spotlight.
+ *   resolver: frame the current beat (tier -> filtered bounds; city/closeup/overview) or,
+ *             when not touring, the selected city / state filter / overview.
+ *   ticker: advance beats on their timers.
+ *   orbit: useFrame slowly rotates the camera on beats flagged orbit.
+ *   cancel: real user input on the canvas (pointerdown / wheel) ends the tour. DOM events
+ *           are used so the tour's OWN programmatic moves (framing, orbit) never self-cancel.
  */
 export default function CameraRig() {
   const controls = useRef<React.ComponentRef<typeof CameraControls>>(null);
   const didInit = useRef(false);
+  const gl = useThree((s) => s.gl);
 
   const tour = useStore((s) => s.tour);
   const selectedCity = useStore((s) => s.selectedCity);
@@ -34,7 +32,6 @@ export default function CameraRig() {
   const tierFilter = useStore((s) => s.tierFilter);
   const stateFilter = useStore((s) => s.stateFilter);
 
-  // Mount precedence: decide tour vs deep-link vs reduced-motion (once).
   useEffect(() => {
     const cc = controls.current;
     if (!cc || didInit.current) return;
@@ -42,35 +39,48 @@ export default function CameraRig() {
     cc.smoothTime = 0.7;
 
     const deepCity = INITIAL_CITY;
-    if (deepCity) {
-      useStore.getState().select(deepCity); // also ends the tour; resolver frames it
-    } else if (prefersReducedMotion()) {
-      useStore.getState().endTour(); // resolver settles to overview; captions show "Play tour"
-    } else {
-      useStore.getState().startTour();
-    }
+    if (deepCity) useStore.getState().select(deepCity);
+    else if (prefersReducedMotion()) useStore.getState().endTour();
+    else useStore.getState().startTour();
     useStore.getState().setIntroDone(true);
 
-    // Cancel the tour the moment the user grabs the camera.
-    const onControl = () => {
+    const el = gl.domElement;
+    const cancel = () => {
       if (useStore.getState().tour.status === "playing") useStore.getState().endTour();
     };
-    cc.addEventListener("control", onControl);
-    return () => cc.removeEventListener("control", onControl);
-  }, []);
+    el.addEventListener("pointerdown", cancel);
+    el.addEventListener("wheel", cancel, { passive: true });
+    return () => {
+      el.removeEventListener("pointerdown", cancel);
+      el.removeEventListener("wheel", cancel);
+    };
+  }, [gl]);
 
-  // Resolver: derive the desired view from all state.
+  // Per-beat side effects (tier filter + spotlight), once per beat.
+  useEffect(() => {
+    if (tour.status !== "playing") return;
+    const beat = TOUR[tour.beat];
+    useStore.getState().setTierFilterRaw(beat.tier ?? 0);
+    useStore.getState().setSpotlight(beat.spotlight && beat.city ? beat.city : null);
+  }, [tour]);
+
+  // Resolver: framing.
   useEffect(() => {
     const cc = controls.current;
     if (!cc || !didInit.current) return;
 
     if (tour.status === "playing") {
       const beat = TOUR[tour.beat];
-      const c = beat.city ? BY_NAME.get(beat.city) : undefined;
-      if (beat.view === "overview" || !c) frameOverview(cc, true);
-      else if (beat.view === "closeup") frameCityClose(cc, c, true);
-      else frameCity(cc, c, true);
-      useStore.getState().setSpotlight(beat.spotlight && beat.city ? beat.city : null);
+      if (beat.view === "tier") {
+        const b = filteredBounds(beat.tier ?? 0, "ALL");
+        if (b) frameBounds(cc, b, true);
+        else frameOverview(cc, true);
+      } else {
+        const c = beat.city ? BY_NAME.get(beat.city) : undefined;
+        if (beat.view === "overview" || !c) frameOverview(cc, true);
+        else if (beat.view === "closeup") frameCityClose(cc, c, true);
+        else frameCity(cc, c, true);
+      }
       return;
     }
     if (selectedCity && BY_NAME.has(selectedCity)) {
@@ -87,12 +97,22 @@ export default function CameraRig() {
     frameOverview(cc, true);
   }, [tour, selectedCity, overviewNonce, tierFilter, stateFilter]);
 
-  // Ticker: advance tour beats on their timers.
+  // Ticker.
   useEffect(() => {
     if (tour.status !== "playing") return;
     const id = setTimeout(() => useStore.getState().advanceTour(), TOUR[tour.beat].duration);
     return () => clearTimeout(id);
   }, [tour]);
+
+  // Orbit: gentle continuous rotation during beats flagged orbit.
+  useFrame((_, delta) => {
+    const cc = controls.current;
+    if (!cc) return;
+    const st = useStore.getState();
+    if (st.tour.status === "playing" && TOUR[st.tour.beat]?.orbit) {
+      cc.rotate(ORBIT_SPEED * delta, 0, false);
+    }
+  });
 
   return <CameraControls ref={controls} makeDefault minDistance={60} maxDistance={9000} dollyToCursor />;
 }

@@ -7,11 +7,19 @@ import { useStore } from "./store";
 import { TOUR } from "./three/tour";
 
 describe("tour spotlight lifecycle (store)", () => {
-  it("advanceTour to done clears the spotlight (no stuck dim after a full tour)", () => {
-    useStore.setState({ tour: { status: "playing", beat: TOUR.length - 1 }, spotlightCity: "Khurja" });
+  it("advanceTour to done clears spotlight + resets tier filter (no stuck dim/filter)", () => {
+    useStore.setState({ tour: { status: "playing", beat: TOUR.length - 1 }, spotlightCity: "Khurja", tierFilter: 4 });
     useStore.getState().advanceTour();
     expect(useStore.getState().tour.status).toBe("done");
     expect(useStore.getState().spotlightCity).toBeNull();
+    expect(useStore.getState().tierFilter).toBe(0);
+  });
+
+  it("setTierFilterRaw drives the tier WITHOUT cancelling the tour (tour walks tiers)", () => {
+    useStore.setState({ tour: { status: "playing", beat: 6 }, tierFilter: 0 });
+    useStore.getState().setTierFilterRaw(2);
+    expect(useStore.getState().tierFilter).toBe(2);
+    expect(useStore.getState().tour.status).toBe("playing");
   });
 
   it("advanceTour mid-tour keeps the current spotlight", () => {

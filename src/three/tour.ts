@@ -8,26 +8,35 @@ import { BY_NAME } from "./cityLayout";
 // other pyramid (via the existing selection-dim shader) so the focused city — and its
 // glowing gold apex — carries the eye. This is the Approach-C narrative: overview ->
 // the giant -> push into the apex while the rest recedes -> the home town.
-export type BeatView = "overview" | "city" | "closeup";
+// "tier" frames the cities of beat.tier (a wide, zoomed-out shot). overview/city/closeup
+// are the zoomed-in shots. orbit slowly rotates the camera for an immersive 3D feel.
+export type BeatView = "overview" | "city" | "closeup" | "tier";
 
 export interface TourBeat {
   view: BeatView;
   city?: string; // required for "city"/"closeup"; must exist in BY_NAME
-  spotlight?: boolean; // dim all other pyramids onto this city
+  tier?: number; // 0 = all; 1-4 sets the visible tier for this beat (drives "tier" view)
+  spotlight?: boolean; // dim all other pyramids onto this city (also shows its data panel)
+  orbit?: boolean; // slowly rotate the camera during the beat
   caption: string; // <= ~80 chars / 2 lines (premise #3: captions carry the meaning)
   duration: number; // ms to hold before advancing
 }
 
+// ~58s immersive tour: intro + band walkthrough on Mumbai (data panel shown on the
+// right), then tier 1 -> 4 each framed and slowly rotating, then an outro.
 export const TOUR: TourBeat[] = [
-  { view: "overview", caption: "India's 305 biggest cities — each one a pyramid.", duration: 3800 },
-  { view: "city", city: "Mumbai", caption: "Taller means bigger. Mumbai is the giant.", duration: 3500 },
-  // Walk the bands bottom -> top while holding the close-up, so each caption names
-  // exactly the band that's lit.
-  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The wide grey base is most people — below the middle class.", duration: 4000 },
-  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The two green bands are the lower-middle and middle classes.", duration: 4000 },
-  { view: "closeup", city: "Mumbai", spotlight: true, caption: "The amber band above them is the affluent.", duration: 3600 },
-  { view: "closeup", city: "Mumbai", spotlight: true, caption: "And the red tip is the elite — the ultra-rich few.", duration: 4200 },
-  { view: "closeup", city: "Khurja", spotlight: true, caption: "Even in a small town like Khurja, the shape holds.", duration: 4200 },
+  { view: "overview", tier: 0, orbit: true, caption: "India's 305 biggest cities — each one a pyramid.", duration: 3800 },
+  { view: "city", city: "Mumbai", tier: 0, spotlight: true, caption: "Taller means bigger. Mumbai is the giant.", duration: 3600 },
+  // Walk the bands bottom -> top while holding the close-up; each caption names the lit band.
+  { view: "closeup", city: "Mumbai", tier: 0, spotlight: true, caption: "The wide grey base is most people — below the middle class.", duration: 3800 },
+  { view: "closeup", city: "Mumbai", tier: 0, spotlight: true, caption: "The two green bands are the lower-middle and middle classes.", duration: 3800 },
+  { view: "closeup", city: "Mumbai", tier: 0, spotlight: true, caption: "The amber band above them is the affluent.", duration: 3400 },
+  { view: "closeup", city: "Mumbai", tier: 0, spotlight: true, caption: "And the red tip is the elite — the ultra-rich few.", duration: 3800 },
+  { view: "tier", tier: 1, orbit: true, caption: "Tier 1 — the 14 megacities. Towering giants.", duration: 7500 },
+  { view: "tier", tier: 2, orbit: true, caption: "Tier 2 — 48 large cities, still tall.", duration: 7500 },
+  { view: "tier", tier: 3, orbit: true, caption: "Tier 3 — 87 mid-size cities, shorter.", duration: 7500 },
+  { view: "tier", tier: 4, orbit: true, caption: "Tier 4 — 156 towns, the smallest and most numerous.", duration: 7500 },
+  { view: "overview", tier: 0, orbit: true, caption: "From megacity to small town, the income shape holds.", duration: 6000 },
 ];
 
 export type TourStatus = "idle" | "playing" | "done";
