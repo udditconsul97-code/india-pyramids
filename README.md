@@ -1,5 +1,8 @@
 # India Income Pyramids
 
+**🔺 Live demo: https://udditconsul97-code.github.io/india-pyramids/**
+(opens with a ~100s auto-playing guided tour; deep-link a city with `?city=Mumbai`)
+
 A single-page 3D visualization: India rendered as a landmass with every city standing on it
 as an **Egyptian-style pyramid**. Pyramid **height encodes city tier** (Tier-1 giant →
 Tier-4 small) and the **horizontal banding encodes income disparity** — a wide low-income
